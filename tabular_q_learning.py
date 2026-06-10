@@ -40,8 +40,8 @@ class Environment:
   def step(self, action: Action) -> tuple[Reward, bool]:
     dx, dy = DIRECTIONS[action]
 
-    new_pos_0 = max(0, min(self.pos[0] + dx, self.dim[0]))
-    new_pos_1 = max(0, min(self.pos[1] + dy, self.dim[1]))
+    new_pos_0 = max(0, min(self.pos[0] + dx, self.dim[0] - 1))
+    new_pos_1 = max(0, min(self.pos[1] + dy, self.dim[1] - 1))
 
     # update history
     self.pos[0], self.prev_pos[0] = new_pos_0, self.pos[0]
@@ -51,6 +51,7 @@ class Environment:
 
   def reset(self) -> None:
     self.pos = [0, 0]
+    self.prev_pos = [0, 0]
 
   def render(self) -> None:
     for y in range(self.dim[1]):
@@ -65,6 +66,7 @@ class Environment:
         else:
           row += ". "
       print(row)
+    print()
 
 
 @dataclass
@@ -84,8 +86,7 @@ def select_action(q_table: np.ndarray, state: State, epsilon: float) -> Action:
   if rng.random() < epsilon:
     a = rng.integers(0, n_actions)
   else:
-    noise = rng.random(n_actions) * 1e-8  # so argmax randomly picks
-    a = int(np.argmax(q + noise))
+    a = int(rng.choice(np.flatnonzero(q == q.max())))  # break ties randomly
 
   return Action(a)
 
@@ -100,7 +101,5 @@ def update(
   params: Parameters,
 ):
   q_next = (1 - done) * np.max(q_table[*new_state])
-  td_error = reward + params.gamma * q_next - q_table[*state]
+  td_error = reward + params.gamma * q_next - q_table[*state, action.value]
   q_table[*state, action.value] += params.alpha * td_error
-
-

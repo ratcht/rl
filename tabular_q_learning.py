@@ -104,30 +104,3 @@ def update(
   q_table[*state, action.value] += params.alpha * td_error
 
 
-env = Environment(dim=(4, 4))
-
-# init q table
-q_table = np.zeros((*env.dim, 4))
-params = Parameters(alpha=0.5, epsilon=0.05, gamma=1)
-num_episodes = 50
-max_steps = 1000
-
-
-pbar_ep = tqdm(range(num_episodes), desc="Episodes")
-for ep in range(num_episodes):
-  env.reset()
-  total_reward = 0
-
-  for step in tqdm(
-    range(max_steps), desc="Steps", leave=False
-  ):  # loop until terminal state
-    action = select_action(q_table, env.pos, params.epsilon)
-    reward, done = env.step(action)
-    update(q_table, env.prev_pos, env.pos, action, reward, done, params)
-
-    total_reward += reward
-
-    if done:
-      break
-
-  pbar_ep.set_postfix(reward=total_reward, eps=params.epsilon)

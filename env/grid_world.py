@@ -1,11 +1,6 @@
-from dataclasses import dataclass
 from enum import Enum
 
 import numpy as np
-from tqdm import tqdm
-
-rng = np.random.default_rng(seed=0)
-
 
 class Action(Enum):
   Up = 0
@@ -21,7 +16,7 @@ DIRECTIONS = {
   Action.Down: (0, -1),
 }
 
-n_actions = 4
+N_ACTIONS = 4
 
 type State = list[int]
 type Reward = float
@@ -68,38 +63,3 @@ class Environment:
       print(row)
     print()
 
-
-@dataclass
-class Parameters:
-  alpha: float  # step size
-  epsilon: float  # e-greedy
-  gamma: float  # discount factor
-
-
-def select_action(q_table: np.ndarray, state: State, epsilon: float) -> Action:
-  # using e-greedy method
-
-  q: np.ndarray = q_table[*state]
-  assert q.shape == (n_actions,)
-
-  # exploratory
-  if rng.random() < epsilon:
-    a = rng.integers(0, n_actions)
-  else:
-    a = int(rng.choice(np.flatnonzero(q == q.max())))  # break ties randomly
-
-  return Action(a)
-
-
-def update(
-  q_table: np.ndarray,
-  state: State,
-  new_state: State,
-  action: Action,
-  reward: Reward,
-  done: bool,
-  params: Parameters,
-):
-  q_next = (1 - done) * np.max(q_table[*new_state])
-  td_error = reward + params.gamma * q_next - q_table[*state, action.value]
-  q_table[*state, action.value] += params.alpha * td_error
